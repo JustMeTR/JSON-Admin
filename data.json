@@ -1,0 +1,53 @@
+-- Admin listesi (UserId'leri saklamak için)
+local admins = {}
+
+-- Admin listesine oyuncu ekleme fonksiyonu
+local function addAdmin(player)
+    if not table.find(admins, player.UserId) then
+        table.insert(admins, player.UserId)
+        print(player.Name .. " now has admin rights.")
+    else
+        print(player.Name .. " already has admin rights.")
+    end
+end
+
+-- Admin kontrol fonksiyonu
+local function isAdmin(player)
+    return table.find(admins, player.UserId) ~= nil
+end
+
+-- Admin komutları
+local function onChatted(player, message)
+    if isAdmin(player) then
+        local command, targetName = message:match("^(%S+)%s+(%S+)$")
+        if command == "!giveadmin" then
+            local targetPlayer = game.Players:FindFirstChild(targetName)
+            if targetPlayer then
+                addAdmin(targetPlayer)
+            else
+                player:SendMessage("Player not found.")
+            end
+        end
+    end
+end
+
+-- Yeni bir oyuncu girdiğinde chat dinleyici ekle
+game.Players.PlayerAdded:Connect(function(player)
+    player.Chatted:Connect(function(message)
+        onChatted(player, message)
+    end)
+end)
+
+-- Mevcut oyuncular için chat dinleyici ekle
+for _, player in ipairs(game.Players:GetPlayers()) do
+    player.Chatted:Connect(function(message)
+        onChatted(player, message)
+    end)
+end)
+
+-- Test için admin ekleme (Private server sahibine admin ekleyebilirsiniz)
+game.Players.PlayerAdded:Connect(function(player)
+    if player.UserId == game.CreatorId then
+        addAdmin(player)
+    end
+end)
